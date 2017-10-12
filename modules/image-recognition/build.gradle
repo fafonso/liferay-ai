@@ -1,0 +1,57 @@
+bundle {
+    includeTransitiveDependencies = true
+}
+
+configurations {
+    extraLibs {
+        description = "application embedded libraries"
+        transitive = true
+    }
+    compile { 
+    	extendsFrom extraLibs
+    }
+	compileInclude { 
+    	extendsFrom extraLibs
+    }
+
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+ 	testCompile 'junit:junit:4.12'
+	compileOnly 'org.osgi:org.osgi.core:6.0.0'
+	compileOnly group: "org.osgi", name: "osgi.cmpn", version: "6.0.0"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "2.0.0"
+	extraLibs 'com.clarifai.clarifai-api2:core:2.2.12'
+	extraLibs group: 'commons-io', name: 'commons-io', version: '2.5'
+
+}
+
+jar{ 
+ manifest {
+        attributes( "Import-Package":"com.liferay.portal.kernel.model;version=\"[1.0,2)\""+
+					",com.liferay.document.library.kernel.model;version=\"[1.0,2)\""+
+					",com.liferay.document.library.kernel.service"+
+					",com.liferay.asset.kernel.model"+
+					",com.liferay.portal.kernel.exception;version=\"[7.0,8)\""+
+					",com.liferay.portal.kernel.log;version=\"[7.0,8)\""+
+					",com.liferay.asset.kernel.service"+
+					",javax.crypto"+
+					",javax.net"+
+					",javax.net.ssl"+
+					",javax.crypto.interfaces"+
+					",javax.crypto.spec"+
+					",javax.servlet"+
+					",org.osgi.framework;version=\"[1.8,2)\""+
+					""
+        		   ,
+                   "Written-By": "Filipe Afonso")
+    }
+}
+
+
+
+
