@@ -35,27 +35,6 @@ dependencies {
 
 }
 
-jar{ 
- manifest {
-        attributes( "Import-Package":"com.liferay.portal.kernel.model;version=\"[1.0,2)\""+
-					",com.liferay.document.library.kernel.model;version=\"[1.0,2)\""+
-					",com.liferay.document.library.kernel.service"+
-					",com.liferay.asset.kernel.model"+
-					",com.liferay.portal.kernel.exception;version=\"[7.0,8)\""+
-					",com.liferay.portal.kernel.log;version=\"[7.0,8)\""+
-					",com.liferay.asset.kernel.service"+
-					",javax.crypto"+
-					",javax.net"+
-					",javax.net.ssl"+
-					",javax.crypto.interfaces"+
-					",javax.crypto.spec"+
-					",javax.servlet"+
-					",org.osgi.framework;version=\"[1.8,2)\""+
-					""
-        		   ,
-                   "Written-By": "Filipe Afonso")
-    }
-}
 
 
 
