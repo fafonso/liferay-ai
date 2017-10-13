@@ -3,18 +3,16 @@ package liferay.ai.image.recognition;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
 
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalServiceUtil;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -30,17 +28,19 @@ import clarifai2.dto.prediction.Concept;
  *
  *	Liferay DXP Model Listener for AssetEntry entities
  */
-@Component(immediate = true, service = ModelListener.class, configurationPid = "liferay.ai.image.recognition.ClassifyingDocumentConfiguration")
+@Component(immediate = true, service = ModelListener.class)
 public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 
 	
 
 	@Activate
-	@Modified
-	public void activate(Map<String, Object> properties) {
+	public void activate(BundleContext context) {
 
-		_configuration = ConfigurableUtil.createConfigurable(
-			ClassifyingDocumentConfiguration.class, properties);
+		String location = context.getBundle().getLocation();
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("bundle " + location + " activated!!!");
+		}
 	}
 
 	@Override
@@ -113,8 +113,7 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 			byte[] bytes = IOUtils.toByteArray(fileEntry.getContentStream());
 			
 			// Call Clarifai API to classify the uploaded file
-			clarifaiResults = ClarifaiIntegrator.tagDocument(
-				_configuration.clarifyAPIKey(), bytes);
+			clarifaiResults = ClarifaiIntegrator.tagDocument(bytes);
 		}
 		catch (Exception e) {
 			_log.error(e);
@@ -132,7 +131,7 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 				
 				// Filter the results, ensuring a high probability of predictions 
 				// being present on the uploaded image 
-				if (data.value() > _configuration.classificationThreshold()) {
+				if (data.value() > CLASSIFICATION_THRESHOLD) {
 					tagList.add(data.name());
 				}
 			}
@@ -140,10 +139,9 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 		return tagList.toArray(new String[0]);
 	}
 
-	// Configuration Admin object, to get this module configurations
-	private volatile ClassifyingDocumentConfiguration _configuration;
-
 	private static final Log _log =
 		LogFactoryUtil.getLog(ClassifyingDocumentListener.class);
 	
+	private static final double CLASSIFICATION_THRESHOLD = 0.9;
+
 }
