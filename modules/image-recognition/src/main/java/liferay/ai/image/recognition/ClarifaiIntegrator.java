@@ -4,6 +4,8 @@ package liferay.ai.image.recognition;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
@@ -15,22 +17,27 @@ import clarifai2.dto.prediction.Concept;
 import okhttp3.OkHttpClient;
 
 /**
- *   @author Filipe Afonso   @author Carlos Hernandez Clarifai API integrator,
- * centralizes all the code to communicate with clarifai API
+ *   @author Filipe Afonso   
+ *   @author Carlos Hernandez 
+ *   Clarifai API integrator, centralizes all the code to communicate with clarifai API
  */
 public class ClarifaiIntegrator {
 
 	/**
+	 * @param apiKey
+	 *            - API Key for integration with clarifai
 	 * @param bytes
+	 *            - Image for categorization
 	 * @return List of predictions
 	 * @throws IOException
 	 *             Classify an image, using Clarifai API
 	 */
-	public static List<ClarifaiOutput<Concept>> tagDocument(byte[] bytes)
+	public static List<ClarifaiOutput<Concept>> tagDocument(
+		String apiKey, byte[] bytes)
 		throws IOException {
 
 		// Ensure that we have a Clarifai client
-		ClarifaiClient client = getClient();
+		ClarifaiClient client = getClient(apiKey);
 		if (client == null) {
 			return null;
 		}
@@ -46,18 +53,20 @@ public class ClarifaiIntegrator {
 	}
 
 	/**
+	 * @param apiKey
+	 *            - API Key for integration with clarifai
 	 * @return A client for communication with Clarifai API
 	 */
-	public static ClarifaiClient getClient() {
+	public static ClarifaiClient getClient(String apiKey) {
 
 		// Using our user API Key, we initialize a client
-		if ((Constants.appKEY == null)) {
+		if (StringUtils.isEmpty(apiKey)) {
 			_log.error("PLEASE GO TO CLARIFAI's WEBSITE AND CREATE A FREE TEST ACCOUNT");
 			_log.error("Then set your Constants.appKEY");
 			return null;
 		}
 		
-		return new ClarifaiBuilder(Constants.appKEY).
+		return new ClarifaiBuilder(apiKey).
 						client(new OkHttpClient()). // OPTIONAL:  Allows customization of OkHttp by the user
 						buildSync(); // or use .build() to get a Future<ClarifaiClient>
 	}
