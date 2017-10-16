@@ -1,4 +1,4 @@
-package liferay.ai.image.recognition;
+package com.liferay.ai.image.recognition;
 
 
 import org.junit.Test;

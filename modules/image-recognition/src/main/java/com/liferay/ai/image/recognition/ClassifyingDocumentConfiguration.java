@@ -1,5 +1,5 @@
 
-package liferay.ai.image.recognition;
+package com.liferay.ai.image.recognition;
 
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 
@@ -11,7 +11,7 @@ import aQute.bnd.annotation.metatype.Meta;
  * Add configuration admin feature to image recognition module
  */
 @ExtendedObjectClassDefinition(category = "Machine Learning")
-@Meta.OCD(id = "liferay.ai.image.recognition.ClassifyingDocumentConfiguration", name = "Image Recognition Configuration")
+@Meta.OCD(id = "com.liferay.ai.image.recognition.ClassifyingDocumentConfiguration", name = "Image Recognition Configuration")
 public interface ClassifyingDocumentConfiguration {
 
 	/**

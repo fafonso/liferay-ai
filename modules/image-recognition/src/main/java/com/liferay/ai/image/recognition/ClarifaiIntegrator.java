@@ -1,5 +1,5 @@
 
-package liferay.ai.image.recognition;
+package com.liferay.ai.image.recognition;
 
 import java.io.IOException;
 import java.util.List;

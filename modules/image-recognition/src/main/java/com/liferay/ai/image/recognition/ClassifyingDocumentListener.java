@@ -1,5 +1,5 @@
 
-package liferay.ai.image.recognition;
+package com.liferay.ai.image.recognition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ import clarifai2.dto.prediction.Concept;
  */
 @Component(immediate = true, 
            service = ModelListener.class, 
-           configurationPid = "liferay.ai.image.recognition.ClassifyingDocumentConfiguration")
+           configurationPid = "com.liferay.ai.image.recognition.ClassifyingDocumentConfiguration")
 public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 
 	
