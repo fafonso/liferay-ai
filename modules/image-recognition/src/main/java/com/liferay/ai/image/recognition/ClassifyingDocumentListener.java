@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
@@ -16,6 +17,7 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.ModelListenerException;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
@@ -41,6 +43,7 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 	@Modified
 	public void activate(Map<String, Object> properties) {
 
+		// Initialize the configuration admin
 		_configuration = ConfigurableUtil.createConfigurable(
 			ClassifyingDocumentConfiguration.class, properties);
 	}
@@ -61,37 +64,74 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 
 	private void classifyImage(AssetEntry model) {
 
-		try {
-			String className = DLFileEntry.class.getName();
 			
-			// We are only classifying DLFileEntry 
-			if (model.getClassName().equals(className)) {
-				long classPK = model.getClassPK();
-				
-				// Get predictions from Clarifai API
-				String[] tagsArray = clarifaiImage(model);
-				
-				if (tagsArray == null) {
-					if (_log.isDebugEnabled()) {
-						_log.debug("Your document won't be tagged, please check everything is alright (API keys etc)");
-					}
-					return;
-				}
-				for (String tag : tagsArray) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(String.format(("tagging document tag: %s"), tag));
-					}
-				}
-				
-				// Apply those predictions as tags
-				long[] categoryIds = null;
-				AssetEntryLocalServiceUtil.updateEntry(
-					model.getUserId(), model.getGroupId(), className, classPK,
-					categoryIds, tagsArray);
+		// Check if it is a DLFileEntry
+		if (!DLFileEntry.class.getName().equals(model.getClassName())) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Image recognition will be skipped as it's not a DLFileEntry.");
+			}
+			
+			// If not, nothing else to do
+			return;
+		}
+
+		// Get the uploaded file entry
+		DLFileEntry fileEntry =
+			DLFileEntryLocalServiceUtil.fetchDLFileEntry(model.getClassPK());
+
+		// Check if we were able to get the file
+		if (fileEntry == null) {
+			_log.error("Image recognition didn't find any file!");
+
+			// Nothing else to do
+			return;
+		}
+
+		// Check if the file extension is valid for image recognition
+		if (StringUtils.isEmpty(_configuration.supportedImageExtensions()) ||
+			!StringUtils.containsIgnoreCase(
+				_configuration.supportedImageExtensions(),
+				fileEntry.getExtension())) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Not supported file extension for image recognition. Supported file extensions are: " +
+						_configuration.supportedImageExtensions());
+			}
+
+			// Nothing else to do
+			return;
+		}
+
+		// Get predictions from recognition engine
+		String[] tagsArray = clarifaiImage(fileEntry);
+
+		// Check if we received any predictions for the image
+		if (tagsArray == null) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Your document won't be tagged, please check everything is alright (API keys etc)");
+			}
+			return;
+		}
+
+		// Log received predictions
+		if (_log.isDebugEnabled()) {
+			for (String tag : tagsArray) {
+				_log.debug(String.format(("tagging document tag: %s"), tag));
 			}
 		}
-		catch (Exception e) {
-			_log.error(e);
+
+		// Apply received predictions as tags for this image
+		try {
+			AssetEntryLocalServiceUtil.updateEntry(
+				model.getUserId(), model.getGroupId(),
+				DLFileEntry.class.getName(), model.getClassPK(),
+				model.getCategoryIds(),
+				tagsArray);
+		}
+		catch (PortalException pe) {
+			_log.error(pe);
 		}
 
 	}
@@ -100,7 +140,7 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 	 * @param model
 	 * @return List of predictions from Clarifai API, only applied to uploaded files
 	 */
-	private String[] clarifaiImage(AssetEntry model) { 
+	private String[] clarifaiImage(DLFileEntry fileEntry) {
 
 		// Initializations
 		List<ClarifaiOutput<Concept>> clarifaiResults =
@@ -110,8 +150,6 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 		
 		try {
 			// Get the uploaded file entry
-			DLFileEntry fileEntry =
-				DLFileEntryLocalServiceUtil.getDLFileEntry(model.getClassPK());
 			byte[] bytes = IOUtils.toByteArray(fileEntry.getContentStream());
 			
 			// Call Clarifai API to classify the uploaded file

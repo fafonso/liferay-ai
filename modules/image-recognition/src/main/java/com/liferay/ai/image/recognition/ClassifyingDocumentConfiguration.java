@@ -33,4 +33,11 @@ public interface ClassifyingDocumentConfiguration {
 			 description = "Clarifai API Key, required for communication with clarifai service")
 	public String clarifyAPIKey();
 
+	/**
+	 * @return Valid file extension for image recognition
+	 */
+	@Meta.AD(required = true,
+			 description = "File extensions that will be considered for image recognition",
+			 deflt = "jpg jpeg png tiff bmp")
+	public String supportedImageExtensions();
 }
