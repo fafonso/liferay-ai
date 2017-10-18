@@ -1,18 +1,20 @@
--metatype: *
 -dsannotations: *
-Bundle-Name: image-recognition
-Bundle-SymbolicName: com.liferay.ai.image.recognition
+-metatype: *
+Bundle-Name: image-recognition-clarifai-impl
+Bundle-SymbolicName: com.liferay.image.recognition.clarifai.impl
 Bundle-Version: 1.0.0
+Private-Package: com.liferay.image.recognition.clarifai.impl
 Import-Package: \
 	com.liferay.portal.kernel.model;version='[1.0,2)',\
 	org.osgi.framework;version='[1.8,2)',\
-	com.liferay.document.library.kernel.model;version='[1.0,2)',\
 	com.liferay.portal.kernel.exception;version='[7.0,8)',\
 	com.liferay.portal.kernel.log;version='[7.0,8)',\
 	com.liferay.portal.configuration.metatype.bnd.util,\
 	com.liferay.portal.configuration.metatype.annotations,\
-	com.liferay.asset.kernel.model,\
-	com.liferay.asset.kernel.service,\
-	com.liferay.document.library.kernel.service,\
-	com.liferay.image.recognition.api
-	
+	com.liferay.image.recognition.api,\
+	javax.crypto,\
+	javax.net,\
+	javax.net.ssl,\
+	javax.crypto.interfaces,\
+	javax.crypto.spec,\
+	javax.servlet

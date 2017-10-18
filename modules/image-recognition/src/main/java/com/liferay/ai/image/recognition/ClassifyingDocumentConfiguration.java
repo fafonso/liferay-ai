@@ -6,7 +6,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 import aQute.bnd.annotation.metatype.Meta;
 
 /**
- * @author fafonso 
+ * @author Filipe Afonso 
  * 
  * Add configuration admin feature to image recognition module
  */
@@ -24,14 +24,6 @@ public interface ClassifyingDocumentConfiguration {
 			 required = true, 
 			 description = "Threshold for prediction probability. Only predictions with more than this threshold will be considered.")
 	public double classificationThreshold();
-
-	/**
-	 * @return Clarifai API Key, required for communication with clarifai
-	 *         service
-	 */
-	@Meta.AD(required = false,
-			 description = "Clarifai API Key, required for communication with clarifai service")
-	public String clarifyAPIKey();
 
 	/**
 	 * @return Valid file extension for image recognition

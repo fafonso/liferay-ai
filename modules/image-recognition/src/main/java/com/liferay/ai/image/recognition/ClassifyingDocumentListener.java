@@ -1,8 +1,7 @@
 
 package com.liferay.ai.image.recognition;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -16,6 +15,7 @@ import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
+import com.liferay.image.recognition.api.ImageRecognitionApi;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -23,9 +23,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
-
-import clarifai2.dto.model.output.ClarifaiOutput;
-import clarifai2.dto.prediction.Concept;
 
 /**
  * @author Filipe Afonso
@@ -105,13 +102,24 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 		}
 
 		// Get predictions from recognition engine
-		String[] tagsArray = clarifaiImage(fileEntry);
+		String[] tagsArray;
+		try {
+			tagsArray = getImageRecognitionApi().imageToText(
+				IOUtils.toByteArray(fileEntry.getContentStream()),
+				_configuration.classificationThreshold());
+		}
+		catch (PortalException | IOException e) {
+			_log.error("It was not possible to categorize the image", e);
+
+			// If we get a problem here, nothing else to do
+			return;
+		}
 
 		// Check if we received any predictions for the image
 		if (tagsArray == null) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
-					"Your document won't be tagged, please check everything is alright (API keys etc)");
+					"No predictions were received for the uploaded image");
 			}
 			return;
 		}
@@ -133,59 +141,9 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 		}
 		catch (PortalException pe) {
 			_log.error(pe);
+			return;
 		}
 
-	}
-
-	/**
-	 * @param model
-	 * @return List of predictions from Clarifai API, only applied to uploaded files
-	 */
-	private String[] clarifaiImage(DLFileEntry fileEntry) {
-
-		// Initializations
-		List<ClarifaiOutput<Concept>> clarifaiResults =
-			new ArrayList<ClarifaiOutput<Concept>>();
-		
-		List<String> tagList = new ArrayList<String>();
-		
-		try {
-			// Get the uploaded file entry
-			byte[] bytes = IOUtils.toByteArray(fileEntry.getContentStream());
-			
-			// Call Clarifai API to classify the uploaded file
-			clarifaiResults = ClarifaiIntegrator.tagDocument(
-				_configuration.clarifyAPIKey(), bytes);
-		}
-		catch (Exception e) {
-			_log.error(e);
-		}
-		
-		if (clarifaiResults == null) {
-			return null;
-		}
-		
-		// Log the threshold in use
-		if (_log.isDebugEnabled()) {
-			_log.debug(
-				"Predictions will be filtered with the following threshold: " +
-					_configuration.classificationThreshold());
-		}
-
-		for (ClarifaiOutput<Concept> result : clarifaiResults) {
-			for (Concept data : result.data()) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(String.format("%s=%s", data.name(), data.value()));
-				}
-				
-				// Filter the results, ensuring a high probability of predictions 
-				// being present on the uploaded image 
-				if (data.value() > _configuration.classificationThreshold()) {
-					tagList.add(data.name());
-				}
-			}
-		}
-		return tagList.toArray(new String[0]);
 	}
 
 	public DLFileEntryLocalService getDLFileEntryLocalService() {
@@ -212,9 +170,22 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 		this._assetEntryLocalService = assetEntryLocalService;
 	}
 
+	public ImageRecognitionApi getImageRecognitionApi() {
+
+		return _imageRecognitionApi;
+	}
+
+	@Reference
+	public void setImageRecognitionApi(
+		ImageRecognitionApi imageRecognitionApi) {
+
+		this._imageRecognitionApi = imageRecognitionApi;
+	}
+
 	// Liferay services to be injected through DS
 	private DLFileEntryLocalService _dlFileEntryLocalService;
 	private AssetEntryLocalService _assetEntryLocalService;
+	private ImageRecognitionApi _imageRecognitionApi;
 
 	// Configuration Admin object, to get this module configurations
 	private volatile ClassifyingDocumentConfiguration _configuration;
