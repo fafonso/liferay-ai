@@ -32,4 +32,11 @@ public interface ClassifyingDocumentConfiguration {
 			 description = "File extensions that will be considered for image recognition",
 			 deflt = "jpg jpeg png tiff bmp")
 	public String supportedImageExtensions();
+
+	/**
+	 * @return True if image recognition feature is active
+	 */
+	@Meta.AD(required = true,
+		     deflt = "true")
+	public boolean active();
 }

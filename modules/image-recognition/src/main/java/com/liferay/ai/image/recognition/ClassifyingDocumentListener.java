@@ -50,12 +50,22 @@ public class ClassifyingDocumentListener extends BaseModelListener<AssetEntry> {
 	public void onAfterCreate(AssetEntry model)
 		throws ModelListenerException {
 
-		if (_log.isDebugEnabled()) {
-			_log.debug("upload document! - onAfterCreate");
+		// Check if image recognition is enabled
+		if (_configuration.active()) {
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Image Recognition is enabled and there is an uploaded document! (onAfterCreate)");
+			}
+
+			// After creating a new asset entry, we try to classify it
+			classifyImage(model);
 		}
-		
-		// After creating a new asset entry, we try to classify it
-		classifyImage(model);
+		else {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Image Recognition is disabled!");
+			}
+		}
 		
 		super.onAfterCreate(model);
 	}
