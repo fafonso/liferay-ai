@@ -21,14 +21,14 @@ public interface ClassifyingDocumentConfiguration {
 	@Meta.AD(deflt = "0.9", 
 			 max = "1", 
 			 min = "0", 
-			 required = true, 
+			 required = false, 
 			 description = "Threshold for prediction probability. Only predictions with more than this threshold will be considered.")
 	public double classificationThreshold();
 
 	/**
 	 * @return Valid file extension for image recognition
 	 */
-	@Meta.AD(required = true,
+	@Meta.AD(required = false,
 			 description = "File extensions that will be considered for image recognition",
 			 deflt = "jpg jpeg png tiff bmp")
 	public String supportedImageExtensions();
@@ -36,7 +36,7 @@ public interface ClassifyingDocumentConfiguration {
 	/**
 	 * @return True if image recognition feature is active
 	 */
-	@Meta.AD(required = true,
+	@Meta.AD(required = false,
 		     deflt = "true")
 	public boolean active();
 }
